@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      ENVIRONMENT: local
+      AWS_REGION: eu-west-2
+      APP_VERSION: compose

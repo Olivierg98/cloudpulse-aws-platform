@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CloudPulse | Olivier Gouna</title>
+  <style>
+    :root{color-scheme:dark;--ink:#edf6ff;--muted:#9bb0c8;--cyan:#3ee7c5;--blue:#4994ff;--panel:#101b2d}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,sans-serif;background:radial-gradient(circle at 85% 10%,#173961,transparent 32%),#07101d;color:var(--ink)}
+    main{max-width:1080px;margin:auto;padding:64px 24px}.eyebrow{color:var(--cyan);letter-spacing:.18em;text-transform:uppercase;font-size:.78rem}h1{font-size:clamp(2.8rem,7vw,6rem);line-height:.94;margin:18px 0;max-width:850px}p{color:var(--muted);line-height:1.7;max-width:700px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:48px 0}.card{padding:22px;border:1px solid #213553;background:linear-gradient(145deg,#122038dd,#0b1526dd);border-radius:16px}.card b{display:block;margin-bottom:8px}.status{display:inline-flex;gap:8px;align-items:center;background:#0d2a28;color:#8ff9df;padding:8px 12px;border-radius:999px;font-size:.85rem}.dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}code{color:#8fc6ff}footer{border-top:1px solid #213553;padding-top:24px;margin-top:56px;color:var(--muted)}
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">AWS infrastructure portfolio</div>
+  <h1>Resilient by design.<br>Automated by default.</h1>
+  <p>CloudPulse is a production-style AWS platform engineered by Olivier Gouna. It uses immutable infrastructure, private compute, autoscaling, observability and automated quality gates.</p>
+  <div class="status"><span class="dot"></span> <span id="status">Checking platform health…</span></div>
+  <section class="grid">
+    <div class="card"><b>Multi-AZ AWS</b><p>Load-balanced capacity distributed across two availability zones.</p></div>
+    <div class="card"><b>Infrastructure as Code</b><p>Reusable Terraform module with validated inputs and reproducible environments.</p></div>
+    <div class="card"><b>Secure Operations</b><p>Private instances, no inbound SSH, SSM access, least-privilege security groups.</p></div>
+    <div class="card"><b>Observable</b><p>CloudWatch logs, metrics, dashboards and health alarms built into the platform.</p></div>
+  </section>
+  <p><code id="instance">Loading runtime metadata…</code></p>
+  <footer>Environment: {{ environment }} · FastAPI · Docker · Terraform · GitHub Actions</footer>
+</main><script>
+Promise.all([fetch('/health').then(r=>r.json()),fetch('/api/instance').then(r=>r.json())]).then(([h,i])=>{document.querySelector('#status').textContent=`${h.status} · ${new Date(h.timestamp).toLocaleTimeString()}`;document.querySelector('#instance').textContent=`${i.environment} / ${i.region} / ${i.hostname} / ${i.version}`}).catch(()=>document.querySelector('#status').textContent='Health check unavailable');
+</script></body></html>

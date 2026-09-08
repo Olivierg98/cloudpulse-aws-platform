@@ -93,4 +93,3 @@ terraform destroy
 - Add remote encrypted Terraform state and policy checks.
 
 > The default AWS bootstrap uses a minimal Nginx health service so the infrastructure can be tested before a registry exists. The full FastAPI image runs locally; publishing it to ECR is the next release milestone. Availability and performance claims should be backed by captured failure-drill evidence after deployment.
-
