@@ -76,20 +76,3 @@ Run the [smoke test](scripts/smoke-test.sh) against the output URL. AWS resource
 terraform destroy
 ```
 
-## Interview walkthrough
-
-1. Explain why the ALB is the only ingress path and why SSH is absent.
-2. Show how Auto Scaling replaces an unhealthy instance across availability zones.
-3. Walk through the Terraform module boundary and CI quality gates.
-4. Demonstrate a failure drill using CloudWatch evidence.
-5. Explain the documented cost/security trade-offs and production extensions.
-
-## Roadmap
-
-- Publish the application image to Amazon ECR with immutable tags.
-- Add OIDC-based GitHub-to-AWS deployment without long-lived access keys.
-- Move compute fully private using VPC endpoints or per-AZ NAT Gateways.
-- Add Route 53, ACM TLS and AWS WAF.
-- Add remote encrypted Terraform state and policy checks.
-
-> The default AWS bootstrap uses a minimal Nginx health service so the infrastructure can be tested before a registry exists. The full FastAPI image runs locally; publishing it to ECR is the next release milestone. Availability and performance claims should be backed by captured failure-drill evidence after deployment.
