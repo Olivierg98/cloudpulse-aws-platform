@@ -77,8 +77,13 @@ terraform destroy
 ```
 
 Walkthrough
+
 ALB provides the controlled ingress path while instances remain inaccessible through inbound SSH.
+
 Auto Scaling provides replacement of unhealthy instances across Availability Zones.
+
 Terraform modules separate reusable infrastructure from environment configuration.
+
 CloudWatch monitoring and failure drills provide operational validation.
+
 Cost, security and resilience trade-offs are documented alongside potential production extensions.
