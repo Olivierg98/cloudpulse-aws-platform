@@ -11,6 +11,13 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Show HIGH and CRITICAL findings
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "0"
       - name: Scan repository with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
