@@ -21,3 +21,10 @@ def test_home():
     response = client.get("/")
     assert response.status_code == 200
     assert "CloudPulse" in response.text
+
+
+def test_database_reports_not_configured_without_secret(monkeypatch):
+    monkeypatch.delenv("DATABASE_SECRET_ARN", raising=False)
+    response = client.get("/api/database")
+    assert response.status_code == 200
+    assert response.json() == {"configured": False, "reachable": False}
