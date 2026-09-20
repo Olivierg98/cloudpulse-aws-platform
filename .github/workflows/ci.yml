@@ -23,5 +23,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
       - run: terraform fmt -check -recursive
-      - run: terraform -chdir=infra/environments/dev init -backend=false
-      - run: terraform -chdir=infra/environments/dev validate
+      - name: Validate bootstrap
+        run: terraform -chdir=infra/bootstrap init -backend=false && terraform -chdir=infra/bootstrap validate
+      - name: Validate development environment
+        run: terraform -chdir=infra/environments/dev init -backend=false && terraform -chdir=infra/environments/dev validate
+      - name: Validate production environment
+        run: terraform -chdir=infra/environments/prod init -backend=false && terraform -chdir=infra/environments/prod validate
