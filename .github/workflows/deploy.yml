@@ -187,7 +187,7 @@ jobs:
       - name: Build and push immutable image
         env:
           REPOSITORY: ${{ steps.ecr.outputs.repository }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ github.sha }}-${{ github.run_id }}
         run: |
           docker build --tag "$REPOSITORY:$IMAGE_TAG" .
           docker push "$REPOSITORY:$IMAGE_TAG"
@@ -196,7 +196,7 @@ jobs:
         run: |
           IMAGE_DIGEST=$(aws ecr describe-images \
             --repository-name "${{ inputs.environment == 'prod' && 'cloudpulse-prod' || 'cloudpulse-dev' }}" \
-            --image-ids imageTag="${{ github.sha }}" \
+            --image-ids imageTag="$IMAGE_TAG" \
             --query 'imageDetails[0].imageDigest' --output text)
           IMAGE_URI="${{ steps.ecr.outputs.repository }}@$IMAGE_DIGEST"
           if [ "${{ inputs.environment }}" = "prod" ]; then
