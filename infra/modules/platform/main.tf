@@ -465,7 +465,7 @@ resource "aws_budgets_budget" "monthly" {
   name         = "${local.name}-monthly"
   budget_type  = "COST"
   limit_amount = tostring(var.monthly_budget_gbp)
-  limit_unit   = "GBP"
+  limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
   dynamic "notification" {
