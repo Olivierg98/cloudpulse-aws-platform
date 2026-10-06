@@ -1,4 +1,4 @@
-# CloudPulse — Highly Available AWS Web Platform
+# CloudPulse - Highly Available AWS Web Platform
 
 [![CI](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/workflows/ci.yml)
 [![Security](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/workflows/security.yml/badge.svg)](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/workflows/security.yml)
@@ -139,6 +139,15 @@ OIDC authentication succeeded before Terraform had permission to perform every r
 ### Immutable ECR tags
 
 Initial retries reused the Git commit SHA as the Docker tag. Because ECR tag immutability was enabled, ECR correctly rejected attempts to overwrite that tag. The workflow now combines the commit SHA and GitHub run ID, producing a unique and traceable tag for every build, then deploys the resolved image digest.
+
+### Architecture & Engineering Decisions
+
+**Why EC2 + Auto Scaling instead of Lambda?**
+CloudPulse runs as a containerised web application with predictable, continuously available compute requirements. EC2 provides greater control over the runtime environment, while Auto Scaling allows instances to be replaced or scaled without relying on a single server. Lambda would be better suited to short-lived, event-driven workloads.
+
+**Why private application subnets?**
+Application instances are placed in private subnets so they are not directly exposed to the internet. External traffic enters through the Application Load Balancer, reducing the attack surface while still allowing the application to serve users.
+
 
 ### Infrastructure readiness
 
