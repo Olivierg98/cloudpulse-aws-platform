@@ -40,7 +40,7 @@ flowchart TB
 1. A manual GitHub Actions workflow starts the release.
 2. GitHub authenticates to AWS through OIDC and assumes a short-lived IAM role; no permanent AWS access keys are stored in GitHub.
 3. Terraform initialises against remote S3 state and ensures the ECR repository exists.
-4. GitHub builds the non-root FastAPI Docker image and pushes it to ECR using the unique immutable tag `<commit-sha>-<run-id>`.
+4. GitHub builds the non-root FastAPI Docker image and pushes it to ECR using the unique immutable tag `<commit-sha>-<run-id>-<run-attempt>`.
 5. The workflow resolves the image digest and passes that exact image reference to Terraform.
 6. Terraform creates or updates the VPC, subnets, load balancer, launch template, Auto Scaling group, IAM and monitoring resources.
 7. EC2 pulls and starts the container. The Application Load Balancer exposes the service and performs health checks.
@@ -138,7 +138,7 @@ OIDC authentication succeeded before Terraform had permission to perform every r
 
 ### Immutable ECR tags
 
-Initial retries reused the Git commit SHA as the Docker tag. Because ECR tag immutability was enabled, ECR correctly rejected attempts to overwrite that tag. The workflow now combines the commit SHA and GitHub run ID, producing a unique and traceable tag for every build, then deploys the resolved image digest.
+Initial retries reused the Git commit SHA as the Docker tag. Because ECR tag immutability was enabled, ECR correctly rejected attempts to overwrite that tag. The workflow now combines the commit SHA, GitHub run ID and run attempt, producing a unique and traceable tag for every deployment attempt, then deploys the resolved image digest.
 
 ### Architecture & Engineering Decisions
 
@@ -148,6 +148,17 @@ CloudPulse runs as a containerised web application with predictable, continuousl
 **Why private application subnets?**
 Application instances are placed in private subnets so they are not directly exposed to the internet. External traffic enters through the Application Load Balancer, reducing the attack surface while still allowing the application to serve users.
 
+**Why an Application Load Balancer?**
+The ALB provides a single public entry point and distributes traffic across healthy application instances in multiple Availability Zones. Health checks stop traffic being sent to unhealthy targets and work with Auto Scaling to improve availability.
+
+**Why GitHub OIDC instead of AWS access keys?**
+GitHub Actions authenticates to AWS using OpenID Connect (OIDC), allowing the workflow to assume a short-lived IAM role for each deployment. This avoids storing long-lived AWS access keys in GitHub and reduces credential-management and leakage risk.
+
+**Why immutable ECR image tags?**
+ECR tag immutability prevents an existing container tag from being overwritten, making releases easier to trace and reproduce. When a retry attempted to reuse an existing immutable tag, the deployment failed as designed. The workflow was updated so each deployment attempt receives a unique tag while Terraform deploys the resolved image digest.
+
+**Why two Availability Zones?**
+CloudPulse distributes networking and compute across two Availability Zones so the application is not dependent on a single AZ. The ALB can route traffic to healthy instances across both zones, while Auto Scaling can replace unhealthy capacity.
 
 ### Infrastructure readiness
 
