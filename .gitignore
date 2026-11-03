@@ -6,3 +6,9 @@ __pycache__/
 *.tfstate*
 *.tfplan
 .env
+
+# Azure Terraform local variables and credentials
+**/terraform.tfvars
+**/terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
