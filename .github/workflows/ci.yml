@@ -29,3 +29,5 @@ jobs:
         run: terraform -chdir=infra/environments/dev init -backend=false && terraform -chdir=infra/environments/dev validate
       - name: Validate production environment
         run: terraform -chdir=infra/environments/prod init -backend=false && terraform -chdir=infra/environments/prod validate
+      - name: Review development plan without AWS credentials
+        run: terraform -chdir=infra/environments/dev test -filter=tests/review_plan.tftest.hcl
