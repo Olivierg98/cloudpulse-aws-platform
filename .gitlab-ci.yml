@@ -1,0 +1,64 @@
+stages: [verify, plan, deploy]
+
+default:
+  image:
+    name: hashicorp/terraform:1.11.4
+    entrypoint: [""]
+
+variables:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+verify:
+  stage: verify
+  script:
+    - apk add --no-cache python3
+    - python3 serverless/package.py
+    - cd serverless
+    - terraform fmt -check -recursive
+    - terraform init -backend=false
+    - terraform validate
+    - terraform test
+  artifacts:
+    paths:
+      - serverless/lambda.zip
+      - serverless/.terraform.lock.hcl
+    expire_in: 1 day
+
+.aws:
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: sts.amazonaws.com
+  before_script:
+    - test -n "$AWS_ROLE_ARN" && test -n "$TF_STATE_BUCKET" && test -n "$TF_STATE_REGION"
+    - export AWS_WEB_IDENTITY_TOKEN_FILE="$(mktemp)"
+    - chmod 600 "$AWS_WEB_IDENTITY_TOKEN_FILE"
+    - printf '%s' "$GITLAB_OIDC_TOKEN" > "$AWS_WEB_IDENTITY_TOKEN_FILE"
+    - cd serverless
+    - terraform init -lockfile=readonly -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="region=$TF_STATE_REGION" -backend-config="key=cloudpulse-edge/dev.tfstate" -backend-config="use_lockfile=true"
+
+plan:
+  extends: .aws
+  stage: plan
+  needs: [verify]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $CLOUDPULSE_DEPLOY == "true"'
+  script:
+    - terraform plan -out=deploy.tfplan
+  artifacts:
+    access: maintainer
+    paths:
+      - serverless/deploy.tfplan
+    expire_in: 1 day
+
+deploy:
+  extends: .aws
+  stage: deploy
+  needs: [verify, plan]
+  resource_group: cloudpulse-edge-dev
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $CLOUDPULSE_DEPLOY == "true"'
+      when: manual
+      allow_failure: false
+  script:
+    - terraform apply deploy.tfplan
