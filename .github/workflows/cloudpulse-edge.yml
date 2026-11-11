@@ -1,0 +1,36 @@
+name: CloudPulse Edge verification
+
+on:
+  pull_request:
+    paths:
+      - 'serverless/**'
+      - '.github/workflows/cloudpulse-edge.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: serverless
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.4
+      - name: Package Lambda
+        run: python3 package.py
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive
+      - name: Install Terraform providers
+        run: terraform init -backend=false
+      - name: Validate Terraform configuration
+        run: terraform validate
+      - name: Run mocked AWS tests
+        run: terraform test
