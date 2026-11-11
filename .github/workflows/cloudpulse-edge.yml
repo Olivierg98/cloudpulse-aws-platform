@@ -34,3 +34,57 @@ jobs:
         run: terraform validate
       - name: Run mocked AWS tests
         run: terraform test
+
+  plan-dev:
+    if: >-
+      github.event.pull_request.number == 3 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'feature/cloudpulse-edge'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: serverless
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: 'false'
+      AWS_REGION: eu-west-2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.4
+      - name: Assume the existing dev role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+      - name: Confirm AWS account and initialise isolated state
+        env:
+          DEV_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          expected_account="$(cut -d: -f5 <<< "$DEV_ROLE_ARN")"
+          [[ "$expected_account" =~ ^[0-9]{12}$ ]]
+          test "$(aws sts get-caller-identity --query Account --output text)" = "$expected_account"
+          test -n "$TF_STATE_BUCKET"
+          python3 package.py
+          terraform init -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=cloudpulse-edge/dev.tfstate" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="use_lockfile=true" -backend-config="encrypt=true"
+      - name: Plan serverless resources without writing state
+        run: |
+          terraform plan -lock=false -no-color -out=edge.tfplan > "$RUNNER_TEMP/edge-plan.log" || {
+            grep -E '^Error:' "$RUNNER_TEMP/edge-plan.log" || true
+            exit 1
+          }
+          grep -E '^(Plan:|No changes\.)' "$RUNNER_TEMP/edge-plan.log" | tee -a "$GITHUB_STEP_SUMMARY"
