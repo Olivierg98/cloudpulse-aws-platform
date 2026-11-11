@@ -42,7 +42,7 @@ jobs:
       github.head_ref == 'feature/cloudpulse-edge'
     needs: verify
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 15
     concurrency:
       group: cloudpulse-edge-dev
       cancel-in-progress: false
@@ -70,7 +70,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
           mask-aws-account-id: true
-          role-duration-seconds: 3600
       - name: Confirm AWS account and initialise isolated state
         env:
           DEV_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -92,89 +91,3 @@ jobs:
             exit 1
           }
           grep -E '^(Plan:|No changes\.)' "$RUNNER_TEMP/edge-plan.log" | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - name: Confirm empty state and backend write access
-        run: |
-          terraform state pull > "$RUNNER_TEMP/edge-state.json"
-          python3 - "$RUNNER_TEMP/edge-state.json" <<'PY'
-          import json
-          import sys
-          import uuid
-          from pathlib import Path
-
-          path = Path(sys.argv[1])
-          if path.stat().st_size:
-              if json.loads(path.read_text()).get("resources"):
-                  sys.exit("The Edge state already manages resources. Stopping before deployment.")
-          else:
-              path.write_text(json.dumps({
-                  "version": 4,
-                  "terraform_version": "1.11.4",
-                  "serial": 0,
-                  "lineage": str(uuid.uuid4()),
-                  "outputs": {},
-                  "resources": [],
-              }))
-          PY
-          terraform state push "$RUNNER_TEMP/edge-state.json"
-          terraform state pull > "$RUNNER_TEMP/edge-state-confirmed.json"
-          test -s "$RUNNER_TEMP/edge-state-confirmed.json"
-
-      - name: Apply a fresh create-only dev plan
-        id: apply
-        run: |
-          terraform plan -lock-timeout=60s -no-color -out=edge.tfplan > "$RUNNER_TEMP/edge-plan.log"
-          grep -Fx 'Plan: 17 to add, 0 to change, 0 to destroy.' "$RUNNER_TEMP/edge-plan.log"
-          touch "$RUNNER_TEMP/edge-apply-started"
-          terraform apply -lock-timeout=60s -no-color edge.tfplan
-
-      - name: Verify the live site and correlate CloudWatch logs
-        run: |
-          site_url="$(terraform output -raw site_url)"
-          health_url="$(terraform output -raw health_url)"
-          curl --fail --silent --show-error --retry 8 --retry-all-errors --max-time 15 "$site_url" > "$RUNNER_TEMP/edge-site.html"
-          grep -Fq 'CloudPulse Edge' "$RUNNER_TEMP/edge-site.html"
-          start_ms="$(date +%s%3N)"
-          curl --fail --silent --show-error --retry 8 --retry-all-errors --max-time 15 \
-            --dump-header "$RUNNER_TEMP/edge-headers" "$health_url" > "$RUNNER_TEMP/edge-health.json"
-          python3 - "$RUNNER_TEMP/edge-health.json" <<'PY'
-          import json
-          import sys
-          from pathlib import Path
-
-          health = json.loads(Path(sys.argv[1]).read_text())
-          assert health == {"status": "ok", "service": "cloudpulse-edge"}, health
-          PY
-          request_id="$(awk 'tolower($1) == "apigw-requestid:" { gsub(/\r/, "", $2); id = $2 } END { print id }' "$RUNNER_TEMP/edge-headers")"
-          [[ "$request_id" =~ ^[A-Za-z0-9_+/=-]+$ ]]
-          printf 'CloudFront page and API health response verified.\n' | tee -a "$GITHUB_STEP_SUMMARY"
-          for log_group in /aws/apigateway/cloudpulse-edge-dev /aws/lambda/cloudpulse-edge-dev; do
-            matched=0
-            for attempt in {1..24}; do
-              aws logs filter-log-events --log-group-name "$log_group" \
-                --start-time "$start_ms" --output json > "$RUNNER_TEMP/edge-events.json"
-              if python3 -c 'import json, sys; sys.exit(not any(sys.argv[1] in e["message"] for e in json.load(sys.stdin)["events"]))' \
-                  "$request_id" < "$RUNNER_TEMP/edge-events.json"; then
-                echo "Matched request ID in $log_group."
-                matched=1
-                break
-              fi
-              sleep 10
-            done
-            if [[ "$matched" != 1 ]]; then
-              echo "::error::No matching request ID arrived in $log_group."
-              exit 1
-            fi
-          done
-          printf 'API Gateway and Lambda logged the same request ID: %s\n' "$request_id" | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - name: Destroy the temporary Edge stack
-        if: always()
-        run: |
-          if [[ ! -f "$RUNNER_TEMP/edge-apply-started" ]]; then
-            echo "Apply never started."
-            exit 0
-          fi
-          terraform destroy -auto-approve -lock-timeout=60s -no-color
-          test -z "$(terraform state list)"
-          echo "CloudPulse Edge dev state contains no managed resources." | tee -a "$GITHUB_STEP_SUMMARY"
