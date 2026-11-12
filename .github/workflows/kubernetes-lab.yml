@@ -1,0 +1,49 @@
+name: CloudPulse Kubernetes GitOps lab
+
+on:
+  pull_request:
+    paths:
+      - 'kubernetes/**'
+      - '.github/workflows/kubernetes-lab.yml'
+      - 'app/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: cloudpulse
+      - uses: fluxcd/flux2/action@main
+      - uses: azure/setup-helm@v4
+      - name: Check the Helm chart and dev overlay
+        run: |
+          helm lint kubernetes/chart
+          helm template cloudpulse kubernetes/chart > /dev/null
+          kubectl kustomize kubernetes/environments/dev > /dev/null
+      - name: Build and load the two lab images
+        run: |
+          docker build --label org.opencontainers.image.version=v1 -t cloudpulse:v1 .
+          docker build --label org.opencontainers.image.version=v2 -t cloudpulse:v2 .
+          kind load docker-image --name cloudpulse cloudpulse:v1 cloudpulse:v2
+      - name: Exercise Flux rollout and recovery
+        run: >-
+          bash kubernetes/demo.sh
+          1ac65fe1afe72e041a9720e41e0bc7dbba6e6e3d
+          d5505fbf0d1415779c13cf3a02122cd32c015ed7
+          1ae423e6a203f749cdb9cfb5c86d643082c23df2
+          5aebba83533b0601825d90db58df7ca583c8b66d
+      - name: Collect diagnostics on failure
+        if: failure()
+        run: |
+          kubectl -n flux-system get gitrepositories,kustomizations,helmcharts,helmreleases || true
+          kubectl -n cloudpulse get deployments,pods,events -o wide || true
