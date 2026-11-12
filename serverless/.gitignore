@@ -1,0 +1,6 @@
+.terraform/
+*.tfstate*
+*.tfplan
+backend.hcl
+lambda.zip
+__pycache__/
