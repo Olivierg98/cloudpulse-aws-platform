@@ -21,8 +21,9 @@ Evidence is marked complete only when the linked execution or observation suppor
 
 ## Pull-request extensions
 
-- [ ] [Serverless + GitLab PR #3](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/3): successful real GitLab CI execution and live AWS serverless deployment
-- [ ] [Kubernetes GitOps PR #5](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/5): attach and review a successful rollout/failure/recovery GitHub Actions run before marking proven
+- [x] [Serverless PR #3](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/3): [GitHub Actions verification](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43116117073) passed Lambda packaging, Terraform validation, mocked tests and an AWS development **plan only** (no apply)
+- [ ] Serverless PR #3: real GitLab pipeline execution and live AWS deployment
+- [x] [Kubernetes GitOps PR #5](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/5): [successful GitHub Actions run](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43126957746) completed kind setup, Helm/Kustomize validation and Flux rollout/failure/recovery exercise; see [recovery evidence](GITOPS-RECOVERY-EVIDENCE.md)
 - [ ] [Terraform review PR #4](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/4): production account isolation and required-review settings enforced
 - [ ] [Azure starter PR #2](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/2): deployed and validated in Azure
 
