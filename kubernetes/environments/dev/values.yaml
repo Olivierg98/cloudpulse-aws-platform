@@ -7,4 +7,4 @@ spec:
   values:
     replicaCount: 2
     image:
-      tag: v2
+      tag: unavailable
