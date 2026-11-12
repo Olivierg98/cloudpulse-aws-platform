@@ -26,12 +26,12 @@ A production-style cloud engineering portfolio project by **Olivier Gouna**. Clo
 | Component | What is evidenced | What is not claimed |
 |---|---|---|
 | Core AWS development platform | Successful AWS workflow run and application endpoint checks | Full production security controls or sustained availability |
-| [Serverless + GitLab extension (PR #3)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/3) | Lambda/API Gateway/S3/CloudFront Terraform and GitLab CI configuration; local checks described in PR | Live GitLab pipeline execution or AWS serverless deployment (pending) |
-| [Kubernetes GitOps lab (PR #5)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/5) | kind, Helm, Kustomize and Flux rollout/failure/recovery lab implementation | Production Kubernetes/OpenShift operations; verify workflow results separately |
+| [Serverless + GitLab extension (PR #3)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/3) | Lambda/API Gateway/S3/CloudFront Terraform and GitLab CI configuration; [successful verification and AWS plan run](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43116117073) | Live GitLab pipeline execution or AWS serverless deployment (pending) |
+| [Kubernetes GitOps lab (PR #5)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/5) | kind, Helm, Kustomize and Flux; [successful rollout/failure/recovery workflow](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43126957746) | Production Kubernetes/OpenShift operations |
 | [Terraform review controls (PR #4)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/4) | Mocked dev-plan test and documented isolation/approval design | Separate production AWS accounts or enforced approvals |
 | [Azure Container Apps starter (PR #2)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/2) | Azure Terraform and Azure DevOps pipeline starter | Provisioned or validated Azure deployment |
 
-The extensions are shown in pull requests rather than assumed to be merged into `main`. See the [deployment evidence checklist](docs/EVIDENCE-CHECKLIST.md) for what was observed and what remains unverified.
+The extensions are shown in pull requests rather than assumed to be merged into `main`. See the [deployment evidence checklist](docs/EVIDENCE-CHECKLIST.md) and [recovery test evidence](docs/GITOPS-RECOVERY-EVIDENCE.md) for what was observed and what remains unverified.
 
 ### Environment networking distinction
 
@@ -163,8 +163,8 @@ Initial retries reused the Git commit SHA as the Docker tag. Because ECR tag imm
 **Why EC2 + Auto Scaling instead of Lambda?**
 CloudPulse runs as a containerised web application with predictable, continuously available compute requirements. EC2 provides greater control over the runtime environment, while Auto Scaling allows instances to be replaced or scaled without relying on a single server. Lambda would be better suited to short-lived, event-driven workloads.
 
-**Why private application subnets?**
-Application instances are placed in private subnets so they are not directly exposed to the internet. External traffic enters through the Application Load Balancer, reducing the attack surface while still allowing the application to serve users.
+**Why private application subnets in the production-oriented design?**
+The default low-cost development environment uses public subnets, with application traffic restricted by security groups to the ALB and no inbound SSH. The optional private-subnet configuration removes direct internet-facing addresses from application instances; traffic enters through the ALB. NAT or suitable endpoints must be provided for required outbound access.
 
 **Why an Application Load Balancer?**
 The ALB provides a single public entry point and distributes traffic across healthy application instances in multiple Availability Zones. Health checks stop traffic being sent to unhealthy targets and work with Auto Scaling to improve availability.
