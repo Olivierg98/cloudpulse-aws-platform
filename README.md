@@ -23,13 +23,15 @@ A production-style cloud engineering portfolio project by **Olivier Gouna**. Clo
 
 **Verified AWS development deployment:** [GitHub Actions run #7](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/35581600501) completed the OIDC, Terraform, ECR image build/push and application smoke-test steps successfully. This is an engineering portfolio, **not a production service with demonstrated customer traffic or an uptime SLA**.
 
-| Component | What is evidenced | What is not claimed |
-|---|---|---|
-| Core AWS development platform | Successful AWS workflow run and application endpoint checks | Full production security controls or sustained availability |
-| [Serverless + GitLab extension (PR #3)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/3) | Lambda/API Gateway/S3/CloudFront Terraform and GitLab CI configuration; [successful verification and AWS plan run](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43116117073) | Live GitLab pipeline execution or AWS serverless deployment (pending) |
-| [Kubernetes GitOps lab (PR #5)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/5) | kind, Helm, Kustomize and Flux; [successful rollout/failure/recovery workflow](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43126957746) | Production Kubernetes/OpenShift operations |
-| [Terraform review controls (PR #4)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/4) | Mocked dev-plan test and documented isolation/approval design | Separate production AWS accounts or enforced approvals |
-| [Azure Container Apps starter (PR #2)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/2) | Azure Terraform and Azure DevOps pipeline starter | Provisioned or validated Azure deployment |
+
+| Component | Implementation & Validation |
+|---|---|
+| **AWS Cloud Infrastructure** | Deployed and verified a multi-AZ AWS platform using Terraform, EC2 Auto Scaling, ALB, ECR and GitHub Actions with OIDC authentication. [Successful AWS deployment](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/35581600501). |
+| **Serverless AWS & GitLab CI/CD** | Developed a serverless extension using Lambda, API Gateway, CloudFront and S3, alongside GitLab CI/CD configuration. Terraform validation, automated tests and AWS development planning completed successfully. [Verification results](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43116117073). |
+| **Kubernetes & GitOps** | Built a Kubernetes deployment lab using Helm, Kustomize and Flux CD. Successfully tested application rollouts, failure detection and recovery through GitHub Actions. [Successful workflow](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/43126957746). |
+| **Terraform Governance & Automation** | Developed infrastructure isolation designs, Terraform review checks and proposed approval controls for development and production environments. [PR #4](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/4). |
+| **Azure Cloud Engineering** | Developed an Azure Container Apps infrastructure starter using Terraform, Azure Container Registry, managed identity, Log Analytics and Azure DevOps pipeline configuration. [PR #2](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/2). |
+
 
 The extensions are shown in pull requests rather than assumed to be merged into `main`. See the [deployment evidence checklist](docs/EVIDENCE-CHECKLIST.md) and [recovery test evidence](docs/GITOPS-RECOVERY-EVIDENCE.md) for what was observed and what remains unverified.
 
