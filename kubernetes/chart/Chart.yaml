@@ -1,0 +1,5 @@
+apiVersion: v2
+name: cloudpulse
+description: CloudPulse FastAPI service for the local GitOps lab
+type: application
+version: 0.1.0
