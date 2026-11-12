@@ -7,4 +7,4 @@ spec:
   values:
     replicaCount: 2
     image:
-      tag: v1
+      tag: v2
