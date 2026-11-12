@@ -184,14 +184,3 @@ CloudPulse distributes networking and compute across two Availability Zones so t
 
 An early smoke test reached the load balancer before EC2 had finished installing Docker, pulling the image and passing target health checks, which produced a temporary `502`. The smoke test was changed to tolerate transient startup failures and retry for up to approximately five minutes. The subsequent deployment passed all live endpoint checks.
 
-## Walkthrough
-
-ALB is the controlled application ingress path; the configured application security group has no inbound SSH. Development instances use public subnets by default, while private-subnet placement is an optional production-oriented setting.
-
-Auto Scaling provides replacement of unhealthy instances across Availability Zones.
-
-Terraform modules separate reusable infrastructure from environment configuration.
-
-CloudWatch monitoring and failure drills provide operational validation.
-
-Cost, security and resilience trade-offs are documented alongside clear evidence of what has been verified in development and what is reserved for production.
