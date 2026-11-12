@@ -13,11 +13,29 @@ A production-style cloud engineering portfolio project by **Olivier Gouna**. Clo
 | AWS architecture | VPC, two AZs, ALB, EC2 Auto Scaling, ECR, optional RDS and NAT |
 | Infrastructure as Code | Reusable Terraform module, dev/prod composition and S3 state bootstrap |
 | Linux and containers | Amazon Linux bootstrap, non-root Docker image and health checks |
-| Security | No inbound SSH, SSM, IMDSv2, WAF, GuardDuty, Secrets Manager and Trivy |
+| Security | No inbound SSH in the configured application security group, SSM, IMDSv2 and Trivy; optional WAF, GuardDuty and Secrets Manager |
 | Reliability | Load-balancer health checks, desired-capacity recovery, rolling refresh and scaling policy |
 | Operations | Dashboard, SNS alarm, smoke test, runbook and documented failure drills |
 | CI/CD | GitHub OIDC, immutable ECR images, Terraform validation, deployment and security gate |
 | Cost control | AWS Budget, explicit trade-offs, tagged resources and controlled teardown |
+
+## Project status and supporting evidence
+
+**Verified AWS development deployment:** [GitHub Actions run #7](https://github.com/Olivierg98/cloudpulse-aws-platform/actions/runs/35581600501) completed the OIDC, Terraform, ECR image build/push and application smoke-test steps successfully. This is an engineering portfolio, **not a production service with demonstrated customer traffic or an uptime SLA**.
+
+| Component | What is evidenced | What is not claimed |
+|---|---|---|
+| Core AWS development platform | Successful AWS workflow run and application endpoint checks | Full production security controls or sustained availability |
+| [Serverless + GitLab extension (PR #3)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/3) | Lambda/API Gateway/S3/CloudFront Terraform and GitLab CI configuration; local checks described in PR | Live GitLab pipeline execution or AWS serverless deployment (pending) |
+| [Kubernetes GitOps lab (PR #5)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/5) | kind, Helm, Kustomize and Flux rollout/failure/recovery lab implementation | Production Kubernetes/OpenShift operations; verify workflow results separately |
+| [Terraform review controls (PR #4)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/4) | Mocked dev-plan test and documented isolation/approval design | Separate production AWS accounts or enforced approvals |
+| [Azure Container Apps starter (PR #2)](https://github.com/Olivierg98/cloudpulse-aws-platform/pull/2) | Azure Terraform and Azure DevOps pipeline starter | Provisioned or validated Azure deployment |
+
+The extensions are shown in pull requests rather than assumed to be merged into `main`. See the [deployment evidence checklist](docs/EVIDENCE-CHECKLIST.md) for what was observed and what remains unverified.
+
+### Environment networking distinction
+
+In the low-cost **development** defaults, application instances use **public subnets** but accept application traffic only from the ALB security group and do not permit inbound SSH. Public-subnet placement is **not** equivalent to having private-only compute. The optional **production-oriented** design places application instances in private subnets when `use_private_subnets=true`, with NAT egress when configured. HTTPS, WAF, private database and other production controls are optional and are not asserted to have been deployed together.
 
 ## Deployed development architecture
 
@@ -166,7 +184,7 @@ An early smoke test reached the load balancer before EC2 had finished installing
 
 ## Walkthrough
 
-ALB provides the controlled ingress path while instances remain inaccessible through inbound SSH.
+ALB is the controlled application ingress path; the configured application security group has no inbound SSH. Development instances use public subnets by default, while private-subnet placement is an optional production-oriented setting.
 
 Auto Scaling provides replacement of unhealthy instances across Availability Zones.
 
